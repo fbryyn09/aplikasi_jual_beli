@@ -4,6 +4,8 @@ import 'views/register_screen.dart';
 import 'views/dashboard_screen.dart';
 import 'views/keranjang_screen.dart';
 import 'views/riwayat_screen.dart';
+import 'views/notifikasi_screen.dart';
+
 
 void main() {
   runApp(const TokoApp());
@@ -64,6 +66,7 @@ class TokoApp extends StatelessWidget {
         '/dashboard': (_) => const DashboardScreen(),
         '/keranjang': (_) => const KeranjangScreen(),
         '/riwayat':   (_) => const RiwayatScreen(),
+        '/notifikasi': (_) => const NotifikasiScreen(),
       },
 
       // DetailProdukScreen tidak di sini karena butuh parameter Product
