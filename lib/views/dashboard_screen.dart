@@ -13,17 +13,22 @@ class DashboardScreen extends StatefulWidget {
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
-  final _productCtrl = ProductController();
-  final _authCtrl    = AuthController();
-  final _cartCtrl    = CartController();
+  late final ProductController _productCtrl;
+  late final AuthController _authCtrl;
+  late final CartController _cartCtrl;
 
   List<Product> _produkDitampilkan = [];
   String _kategoriDipilih = 'Semua';
-  final _searchCtrl = TextEditingController();
+  final TextEditingController _searchCtrl = TextEditingController();
 
   @override
   void initState() {
     super.initState();
+
+    _productCtrl = ProductController();
+    _authCtrl = AuthController();
+    _cartCtrl = CartController();
+
     _produkDitampilkan = _productCtrl.getDaftarProduk();
   }
 
@@ -35,7 +40,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   void _filterKategori(String kategori) {
     setState(() {
-      _kategoriDipilih   = kategori;
+      _kategoriDipilih = kategori;
       _produkDitampilkan = _productCtrl.filterKategori(kategori);
     });
   }
@@ -72,7 +77,64 @@ class _DashboardScreenState extends State<DashboardScreen> {
     super.dispose();
   }
 
-  // ─── Widget kartu produk — digabung langsung di sini ───────────
+  // ================= DRAWER =================
+  Widget _buildDrawer() {
+    return Drawer(
+      child: Column(
+        children: [
+          UserAccountsDrawerHeader(
+            decoration: const BoxDecoration(color: Colors.blue),
+            accountName: Text(_authCtrl.getNamaUser()),
+            accountEmail: const Text('user@gmail.com'),
+            currentAccountPicture: const CircleAvatar(
+              backgroundColor: Colors.white,
+              child: Icon(Icons.person, size: 40, color: Colors.blue),
+            ),
+          ),
+
+          ListTile(
+            leading: const Icon(Icons.home),
+            title: const Text('Dashboard'),
+            onTap: () => Navigator.pop(context),
+          ),
+
+          ListTile(
+            leading: const Icon(Icons.shopping_cart),
+            title: const Text('Keranjang'),
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.pushNamed(context, '/keranjang');
+            },
+          ),
+
+          ListTile(
+            leading: const Icon(Icons.history),
+            title: const Text('Riwayat'),
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.pushNamed(context, '/riwayat');
+            },
+          ),
+
+          const Divider(),
+
+          ListTile(
+            leading: const Icon(Icons.logout, color: Colors.red),
+            title: const Text(
+              'Logout',
+              style: TextStyle(color: Colors.red),
+            ),
+            onTap: () {
+              Navigator.pop(context);
+              _logout();
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ================= CARD PRODUK =================
   Widget _buildProductCard(Product product) {
     return GestureDetector(
       onTap: () {
@@ -81,7 +143,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           MaterialPageRoute(
             builder: (_) => DetailProdukScreen(product: product),
           ),
-        ).then((_) => setState(() {})); // refresh badge keranjang saat kembali
+        ).then((_) => setState(() {}));
       },
       child: Container(
         decoration: BoxDecoration(
@@ -98,7 +160,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Emoji produk
             Expanded(
               child: Container(
                 width: double.infinity,
@@ -117,7 +178,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
             ),
 
-            // Info produk
             Padding(
               padding: const EdgeInsets.all(10),
               child: Column(
@@ -157,69 +217,28 @@ class _DashboardScreenState extends State<DashboardScreen> {
       ),
     );
   }
-  // ───────────────────────────────────────────────────────────────
 
+  // ================= UI =================
   @override
   Widget build(BuildContext context) {
     final kategoriList = _productCtrl.getKategori();
 
     return Scaffold(
+      drawer: _buildDrawer(),
       appBar: AppBar(
         title: Text('Halo, ${_authCtrl.getNamaUser()} 👋'),
         actions: [
-          // Ikon keranjang dengan badge
-          Stack(
-            children: [
-              IconButton(
-                icon: const Icon(Icons.shopping_cart_outlined),
-                onPressed: () async {
-                  await Navigator.pushNamed(context, '/keranjang');
-                  setState(() {});
-                },
-              ),
-              if (_cartCtrl.hitungJumlahItem() > 0)
-                Positioned(
-                  right: 6,
-                  top: 6,
-                  child: Container(
-                    width: 16,
-                    height: 16,
-                    decoration: const BoxDecoration(
-                      color: Colors.red,
-                      shape: BoxShape.circle,
-                    ),
-                    child: Center(
-                      child: Text(
-                        '${_cartCtrl.hitungJumlahItem()}',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 10,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-            ],
-          ),
-
-          // Ikon riwayat
           IconButton(
-            icon: const Icon(Icons.receipt_long_outlined),
-            onPressed: () => Navigator.pushNamed(context, '/riwayat'),
-          ),
-
-          // Ikon logout
-          IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: _logout,
+            icon: const Icon(Icons.notifications_outlined),
+            onPressed: () {
+              Navigator.pushNamed(context, '/notifikasi');
+            },
           ),
         ],
       ),
 
       body: Column(
         children: [
-          // Search bar
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
             child: TextField(
@@ -241,7 +260,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
           ),
 
-          // Filter kategori
           SizedBox(
             height: 44,
             child: ListView.builder(
@@ -251,6 +269,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               itemBuilder: (_, i) {
                 final kat = kategoriList[i];
                 final dipilih = kat == _kategoriDipilih;
+
                 return Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 4),
                   child: FilterChip(
@@ -269,7 +288,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
           const SizedBox(height: 8),
 
-          // Grid produk — langsung pakai _buildProductCard
           Expanded(
             child: _produkDitampilkan.isEmpty
                 ? const Center(
